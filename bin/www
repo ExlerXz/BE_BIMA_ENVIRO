@@ -4,7 +4,7 @@ require('dotenv').config()
 const app = require('../app/index')
 const { databaseValidation } = require('../config/database')
 
-// databaseValidation();
+databaseValidation()
 
 const { PORT = 3000, HOST } = process.env
 
