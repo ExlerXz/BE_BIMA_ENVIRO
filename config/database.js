@@ -1,26 +1,26 @@
-const Sequelize = require("sequelize");
+const Sequelize = require('sequelize')
 
 const {
-  DB_USERNAME = "",
-  DB_PASSWORD = "",
-  DB_NAME = "",
-  DB_HOST = "127.0.0.1",
-  DB_PORT = "5432",
-} = process.env;
+  DB_USERNAME = '',
+  DB_PASSWORD = '',
+  DB_NAME = '',
+  DB_HOST = '127.0.0.1',
+  DB_PORT = '5432',
+} = process.env
 
 const sequelize = new Sequelize(`${DB_NAME}`, DB_USERNAME, DB_PASSWORD, {
   host: DB_HOST,
-  dialect: "postgres",
-});
+  dialect: 'postgres',
+})
 
 const databaseValidation = async () => {
   try {
-    await sequelize.authenticate();
-    console.log("Success connect to database");
+    await sequelize.authenticate()
+    console.log('Success connect to database')
   } catch (err) {
-    console.error(`Unable to connect to the database: ${err}`);
+    console.error(`Unable to connect to the database: ${err}`)
   }
-};
+}
 
 module.exports = {
   databaseValidation,
@@ -30,7 +30,7 @@ module.exports = {
     database: `${DB_NAME}`,
     host: DB_HOST,
     port: DB_PORT,
-    dialect: "postgres",
+    dialect: 'postgres',
   },
   test: {
     username: DB_USERNAME,
@@ -38,7 +38,7 @@ module.exports = {
     database: `${DB_NAME}`,
     host: DB_HOST,
     port: DB_PORT,
-    dialect: "postgres",
+    dialect: 'postgres',
   },
   production: {
     username: DB_USERNAME,
@@ -46,6 +46,6 @@ module.exports = {
     database: `${DB_NAME}`,
     host: DB_HOST,
     port: DB_PORT,
-    dialect: "postgres",
+    dialect: 'postgres',
   },
-};
+}

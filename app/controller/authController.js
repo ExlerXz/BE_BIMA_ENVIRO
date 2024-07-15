@@ -14,9 +14,15 @@ const login = async (req, res, next) => {
     }
 
     const user = await Auth.findOne({ where: { username }, include: User })
+
     if (!user) {
       throw new ApiError('User not found', 404)
     }
+
+    if (!user.User.isVerified) {
+      throw new ApiError('User is not verified', 403)
+    }
+
     if (user && bcrypt.compareSync(password, user.password)) {
       const payload = {
         id: user.id,
@@ -71,13 +77,13 @@ const registeringMember = async (req, res, next) => {
     })
 
     const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
-      expiresIn: '1h',
+      expiresIn: '2m',
     })
 
     await VerificationToken.create({
       userId: user.id,
       token,
-      expiresAt: new Date(Date.now() + 3600000),
+      expiresAt: new Date(Date.now() + 120000),
     })
 
     const transporter = nodemailer.createTransport({
@@ -88,7 +94,7 @@ const registeringMember = async (req, res, next) => {
       },
     })
 
-    const verificationUrl = `https://b4b1-114-122-197-11.ngrok-free.app/api/v1/auth/verify?token=${token}`
+    const verificationUrl = `https://6c3f-114-122-201-31.ngrok-free.app/api/v1/auth/verify?token=${token}`
 
     const mailOptions = {
       from: process.env.AUTH_EMAIL,
@@ -158,7 +164,7 @@ const registeringMember = async (req, res, next) => {
       `,
     }
 
-    transporter.sendMail(mailOptions, (error, info) => {
+    transporter.sendMail(mailOptions, async (error, info) => {
       if (error) {
         console.error(error)
         return res
@@ -173,6 +179,21 @@ const registeringMember = async (req, res, next) => {
           user,
         },
       })
+
+      setTimeout(async () => {
+        try {
+          await VerificationToken.destroy({ where: { token } })
+
+          await User.destroy({ where: { id: user.id } })
+          await Auth.destroy({ where: { userId: user.id } })
+
+          console.log(
+            `Expired token and associated user data deleted for userId: ${user.id}`
+          )
+        } catch (err) {
+          console.error('Error deleting expired token and user data:', err)
+        }
+      }, 120000)
     })
   } catch (err) {
     next(new ApiError(err.message, 500))
@@ -187,7 +208,52 @@ const verifyUser = async (req, res, next) => {
       throw new ApiError('Token is required', 400)
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET)
+    let decoded
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET)
+    } catch (error) {
+      if (error.name === 'TokenExpiredError') {
+        return res.status(400).send(`
+          <html>
+            <head>
+              <style>
+                body {
+                  display: flex;
+                  justify-content: center;
+                  align-items: center;
+                  height: 100vh;
+                  background-color: #f4f4f4;
+                  font-family: Arial, sans-serif;
+                }
+                .container {
+                  text-align: center;
+                  background-color: #fff;
+                  padding: 50px;
+                  border-radius: 10px;
+                  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                }
+                .container img {
+                  width: 100px;
+                  margin-bottom: 20px;
+                }
+                .container h1 {
+                  font-size: 24px;
+                  color: #ff6347;
+                }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <img src="https://cdn-icons-png.flaticon.com/512/6227/6227339.png" alt="Expired Token">
+                <h1>Token Expired or Invalid</h1>
+              </div>
+            </body>
+          </html>
+        `)
+      }
+      throw new ApiError('Invalid token', 400)
+    }
+
     const userId = decoded.userId
 
     const verificationToken = await VerificationToken.findOne({
@@ -240,8 +306,8 @@ const verifyUser = async (req, res, next) => {
         </head>
         <body>
           <div class="container">
-            <img src="data:image/png;base64,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" alt="Verified">
-            <h1>Verified Successfully</h1>
+            <img src="https://www.pngall.com/wp-content/uploads/5/Green-Checklist-PNG-Image.png" alt="Verification Successful">
+            <h1>Verification Successful</h1>
           </div>
         </body>
       </html>

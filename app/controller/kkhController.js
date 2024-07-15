@@ -3,7 +3,7 @@ const ApiError = require('../../utils/apiError')
 
 const path = require('path')
 const imagekit = require('../lib/imagekit')
-const { where } = require('sequelize')
+const { Sequelize, Op } = require('sequelize')
 
 const createKkh = async (req, res, next) => {
   const kkhBody = req.body
@@ -114,4 +114,118 @@ const getKkhById = async (req, res, next) => {
   }
 }
 
-module.exports = { createKkh, getAllKkh, getKkhById }
+const getAllKkhGroupedByMonth = async (req, res, next) => {
+  try {
+    const year = new Date().getFullYear()
+
+    const kkhData = await Kkh.findAll({
+      attributes: [
+        [Sequelize.literal('EXTRACT(MONTH FROM "createdAt")'), 'month'],
+        [Sequelize.fn('COUNT', Sequelize.col('id')), 'count'],
+      ],
+      where: Sequelize.literal(`EXTRACT(YEAR FROM "createdAt") = ${year}`),
+      group: [Sequelize.literal('EXTRACT(MONTH FROM "createdAt")')],
+      order: [Sequelize.literal('EXTRACT(MONTH FROM "createdAt") ASC')], // Memastikan pengurutan dari bulan Januari sampai Desember
+      raw: true,
+    })
+
+    const result = {}
+    const months = Array.from({ length: 12 }, (_, index) => ({
+      month: index + 1,
+      name: new Date(year, index).toLocaleString('default', { month: 'long' }),
+    }))
+
+    kkhData.forEach((item) => {
+      const monthName = months.find(
+        (m) => m.month === parseInt(item.month)
+      )?.name
+      if (monthName) {
+        result[monthName] = item.count
+      }
+    })
+
+    months.forEach((month) => {
+      if (!result[month.name]) {
+        result[month.name] = 0
+      }
+    })
+
+    res.status(200).json({
+      status: 'success',
+      data: result,
+    })
+  } catch (err) {
+    next(new ApiError(err.message, 500))
+  }
+}
+
+const getAllKkhForThisAndLastWeek = async (req, res, next) => {
+  try {
+    const today = new Date()
+    const startOfThisWeek = new Date(
+      today.setDate(today.getDate() - today.getDay())
+    )
+    const startOfLastWeek = new Date(
+      today.setDate(today.getDate() - today.getDay() - 7)
+    )
+
+    const kkhData = await Kkh.findAll({
+      attributes: [
+        [Sequelize.fn('DATE', Sequelize.col('updatedAt')), 'date'],
+        [Sequelize.fn('COUNT', Sequelize.col('id')), 'count'],
+      ],
+      where: {
+        updatedAt: {
+          [Op.gte]: startOfLastWeek,
+        },
+      },
+      group: [Sequelize.fn('DATE', Sequelize.col('updatedAt'))],
+      order: [[Sequelize.fn('DATE', Sequelize.col('updatedAt')), 'ASC']],
+      raw: true,
+    })
+
+    const result = {
+      thisWeek: {},
+      lastWeek: {},
+    }
+
+    const addDays = (date, days) => {
+      const result = new Date(date)
+      result.setDate(result.getDate() + days)
+      return result
+    }
+
+    for (let i = 0; i < 7; i++) {
+      const dateThisWeek = addDays(startOfThisWeek, i)
+      const dateLastWeek = addDays(startOfLastWeek, i)
+      const dateStringThisWeek = dateThisWeek.toISOString().split('T')[0]
+      const dateStringLastWeek = dateLastWeek.toISOString().split('T')[0]
+      result.thisWeek[dateStringThisWeek] = 0
+      result.lastWeek[dateStringLastWeek] = 0
+    }
+
+    kkhData.forEach((item) => {
+      const dateString = new Date(item.date).toISOString().split('T')[0]
+      if (new Date(item.date) >= startOfThisWeek) {
+        result.thisWeek[dateString] = item.count
+      } else {
+        result.lastWeek[dateString] = item.count
+      }
+    })
+
+    res.status(200).json({
+      status: 'success',
+      data: result,
+    })
+  } catch (err) {
+    next(new ApiError(err.message, 500))
+  }
+}
+
+module.exports = {
+  createKkh,
+  getAllKkh,
+  getKkhById,
+  getAllKkhGroupedByMonth,
+  getAllKkhForThisAndLastWeek,
+}

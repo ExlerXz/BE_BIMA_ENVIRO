@@ -7,5 +7,7 @@ const multer = require('../middlewares/multer')
 router.post('/', authentication, multer.single('imageUrl'), Kkh.createKkh)
 router.get('/', Kkh.getAllKkh)
 router.get('/byId', authentication, Kkh.getKkhById)
+router.get('/mounth', Kkh.getAllKkhGroupedByMonth)
+router.get('/week', Kkh.getAllKkhForThisAndLastWeek)
 
 module.exports = router

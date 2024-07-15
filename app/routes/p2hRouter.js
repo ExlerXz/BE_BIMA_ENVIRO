@@ -10,7 +10,6 @@ router.post('/bus', authentication, P2h.createP2hBus)
 router.post('/ex', authentication, P2h.createP2hEx)
 router.get('/all', P2h.getAllP2h)
 router.get('/vehicle/:id', P2h.getP2hByVehicle)
-router.get('/date/:date', P2h.getP2hByDate)
 router.get('/month', P2h.getAllP2hGroupedByMonth)
 router.get('/week', P2h.getAllP2hForThisAndLastWeek)
 

@@ -1,12 +1,9 @@
 'use strict'
 const { Model } = require('sequelize')
+const moment = require('moment-timezone')
+
 module.exports = (sequelize, DataTypes) => {
   class P2hUser extends Model {
-    /**
-     * Helper method for defining associations.
-     * This method is not a part of Sequelize lifecycle.
-     * The `models/index` file will call this method automatically.
-     */
     static associate(models) {
       P2hUser.belongsTo(models.User, {
         foreignKey: {
@@ -23,6 +20,7 @@ module.exports = (sequelize, DataTypes) => {
       })
     }
   }
+
   P2hUser.init(
     {
       name: DataTypes.STRING,
@@ -32,11 +30,36 @@ module.exports = (sequelize, DataTypes) => {
       mValidation: DataTypes.BOOLEAN,
       fValidation: DataTypes.BOOLEAN,
       aValidation: DataTypes.BOOLEAN,
+      createdAt: {
+        type: DataTypes.STRING,
+        defaultValue: () =>
+          moment().tz('Asia/Makassar').format('YYYY-MM-DDTHH:mm:ss.SSSZ'),
+      },
+      updatedAt: {
+        type: DataTypes.STRING,
+        defaultValue: () =>
+          moment().tz('Asia/Makassar').format('YYYY-MM-DDTHH:mm:ss.SSSZ'),
+      },
     },
     {
       sequelize,
       modelName: 'P2hUser',
+      hooks: {
+        beforeCreate: (p2hUser, options) => {
+          p2hUser.createdAt = moment()
+            .tz('Asia/Makassar')
+            .format('YYYY-MM-DDTHH:mm:ss.SSSZ')
+          console.log('Hook beforeCreate - createdAt:', p2hUser.createdAt)
+        },
+        beforeUpdate: (p2hUser, options) => {
+          p2hUser.updatedAt = moment()
+            .tz('Asia/Makassar')
+            .format('YYYY-MM-DDTHH:mm:ss.SSSZ')
+          console.log('Hook beforeUpdate - updatedAt:', p2hUser.updatedAt)
+        },
+      },
     }
   )
+
   return P2hUser
 }

@@ -55,6 +55,7 @@ const createP2hDt = async (req, res, next) => {
     kbj,
     idVehicle,
   } = req.body
+
   try {
     const aroundUnit = await AroundUnit.create({
       bdbr,
@@ -71,6 +72,7 @@ const createP2hDt = async (req, res, next) => {
       sc,
       ka,
     })
+
     const inTheCabin = await InTheCabin.create({
       ac,
       fb,
@@ -87,13 +89,13 @@ const createP2hDt = async (req, res, next) => {
       frk,
       krk,
     })
+
     const machineRoom = await MachineRoom.create({
       ar,
       oe,
     })
 
     const currentDate = new Date()
-
     const day = currentDate.getDate()
 
     const monthNames = [
@@ -114,7 +116,6 @@ const createP2hDt = async (req, res, next) => {
     const month = monthNames[monthIndex]
 
     const year = currentDate.getFullYear()
-
     const formattedDate = `${day} ${month} ${year}`
 
     const p2h = await P2h.create({
@@ -733,53 +734,36 @@ const getP2hByVehicle = async (req, res, next) => {
   }
 }
 
-const getP2hByDate = async (req, res, next) => {
-  const { date } = req.params
-  try {
-    const p2h = await P2h.findAll({
-      where: {
-        date,
-      },
-      include: {
-        model: Vehicle,
-      },
-    })
-    res.status(200).json({
-      status: 'success',
-      p2h,
-    })
-  } catch (err) {
-    next(new ApiError(err.message, 500))
-  }
-}
-
 const getAllP2hGroupedByMonth = async (req, res, next) => {
   try {
-    const p2hData = await P2hUser.findAll({
+    const year = new Date().getFullYear()
+
+    const p2hData = await P2h.findAll({
       attributes: [
         [Sequelize.literal('EXTRACT(MONTH FROM "createdAt")'), 'month'],
         [Sequelize.fn('COUNT', Sequelize.col('id')), 'count'],
       ],
+      where: Sequelize.literal(`EXTRACT(YEAR FROM "createdAt") = ${year}`),
       group: [Sequelize.literal('EXTRACT(MONTH FROM "createdAt")')],
-      order: [Sequelize.literal('EXTRACT(MONTH FROM "createdAt")')],
+      order: [Sequelize.literal('EXTRACT(MONTH FROM "createdAt") ASC')], // Memastikan pengurutan dari bulan Januari sampai Desember
       raw: true,
     })
 
     const result = {}
     const months = Array.from({ length: 12 }, (_, index) => ({
       month: index + 1,
-      name: new Date(2020, index).toLocaleString('default', { month: 'long' }),
+      name: new Date(year, index).toLocaleString('default', { month: 'long' }),
     }))
 
-    // Mengisi hasil dari query ke dalam objek hasil
     p2hData.forEach((item) => {
-      const monthName = months.find((m) => m.month === item.month)?.name
+      const monthName = months.find(
+        (m) => m.month === parseInt(item.month)
+      )?.name
       if (monthName) {
         result[monthName] = item.count
       }
     })
 
-    // Inisialisasi nilai 0 untuk setiap bulan yang belum memiliki data
     months.forEach((month) => {
       if (!result[month.name]) {
         result[month.name] = 0
@@ -831,7 +815,6 @@ const getAllP2hForThisAndLastWeek = async (req, res, next) => {
       return result
     }
 
-    // Inisialisasi data untuk minggu ini dan minggu lalu
     for (let i = 0; i < 7; i++) {
       const dateThisWeek = addDays(startOfThisWeek, i)
       const dateLastWeek = addDays(startOfLastWeek, i)
@@ -841,7 +824,6 @@ const getAllP2hForThisAndLastWeek = async (req, res, next) => {
       result.lastWeek[dateStringLastWeek] = 0
     }
 
-    // Mengisi hasil dari query ke dalam objek hasil
     p2hData.forEach((item) => {
       const dateString = new Date(item.date).toISOString().split('T')[0]
       if (new Date(item.date) >= startOfThisWeek) {
@@ -868,7 +850,6 @@ module.exports = {
   createP2hEx,
   getAllP2h,
   getP2hByVehicle,
-  getP2hByDate,
   getAllP2hGroupedByMonth,
   getAllP2hForThisAndLastWeek,
 }
