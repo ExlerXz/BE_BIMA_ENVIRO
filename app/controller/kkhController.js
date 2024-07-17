@@ -7,7 +7,7 @@ const { Sequelize, Op } = require('sequelize')
 
 const createKkh = async (req, res, next) => {
   const kkhBody = req.body
-  const { bedtime, wakeuptime } = kkhBody
+  const { totaltime } = kkhBody
   const file = req.file
   let imageUrl
   try {
@@ -20,9 +20,20 @@ const createKkh = async (req, res, next) => {
       })
       imageUrl = uploadImage.url
     }
-    if (!bedtime || !wakeuptime) {
+
+    if (!totaltime) {
       throw new ApiError('bedTime and wakeuptime are required', 400)
     }
+
+    const timeParts = totaltime.match(/(\d+)\s*Jam\s*(\d+)?\s*Menit/)
+    if (!timeParts) {
+      throw new ApiError('Invalid totaltime format', 400)
+    }
+
+    const hours = parseInt(timeParts[1], 10)
+    const minutes = parseInt(timeParts[2] || 0, 10)
+    const totalHours = hours + minutes / 60
+
     const currentDate = new Date()
     const day = currentDate.getDate()
     const monthNames = [
@@ -42,34 +53,43 @@ const createKkh = async (req, res, next) => {
     const monthIndex = currentDate.getMonth()
     const month = monthNames[monthIndex]
     const year = currentDate.getFullYear()
-    const formattedDate = `${day} ${month} ${year}`
+    const dayNames = [
+      'Minggu',
+      'Senin',
+      'Selasa',
+      'Rabu',
+      'Kamis',
+      'Jumat',
+      'Sabtu',
+    ]
+    const dayOfWeek = currentDate.getDay()
+    const dayName = dayNames[dayOfWeek]
 
-    const [bedtimeHours, bedtimeMinutes] = bedtime.split(':').map(Number)
-    const [wakeuptimeHours, wakeuptimeMinutes] = wakeuptime
-      .split(':')
-      .map(Number)
+    const formattedDate = `${dayName}, ${day} ${month} ${year}`
 
-    const bedtimeInMinutes = bedtimeHours * 60 + bedtimeMinutes
-    const wakeuptimeInMinutes = wakeuptimeHours * 60 + wakeuptimeMinutes
+    let complaint
 
-    let totalMinutes
-    if (wakeuptimeInMinutes >= bedtimeInMinutes) {
-      totalMinutes = wakeuptimeInMinutes - bedtimeInMinutes
+    if (totalHours >= 6) {
+      complaint = 'Fit to work'
+    } else if (totalHours < 6 && totalHours >= 4) {
+      complaint = 'On Monitoring'
     } else {
-      totalMinutes = 1440 - bedtimeInMinutes + wakeuptimeInMinutes
+      complaint = 'Kurang Tidur'
     }
 
-    const totalHours = Math.floor(totalMinutes / 60)
-    const remainingMinutes = totalMinutes % 60
-    const totaltime = `${totalHours} hours ${remainingMinutes} minutes`
+    if (dayOfWeek === 5 && totalHours >= 4.5) {
+      complaint = 'Fit to work'
+    } else if (dayOfWeek === 5 && totalHours < 4) {
+      complaint = 'On Monitoring'
+    }
 
     const kkh = await Kkh.create({
       userId: req.user.id,
       date: formattedDate,
       totaltime: totaltime,
       wValidation: true,
-      ...kkhBody,
       imageUrl,
+      complaint,
     })
     res.status(201).json({
       status: 'success',
@@ -195,21 +215,38 @@ const getAllKkhForThisAndLastWeek = async (req, res, next) => {
       return result
     }
 
+    // Function to get day initials
+    const getDayInitial = (date) => {
+      const days = [
+        'Minggu',
+        'Senin',
+        'Selasa',
+        'Rabu',
+        'Kamis',
+        'Jumat',
+        'Sabtu',
+      ]
+      return days[date.getDay()]
+    }
+
     for (let i = 0; i < 7; i++) {
       const dateThisWeek = addDays(startOfThisWeek, i)
       const dateLastWeek = addDays(startOfLastWeek, i)
-      const dateStringThisWeek = dateThisWeek.toISOString().split('T')[0]
-      const dateStringLastWeek = dateLastWeek.toISOString().split('T')[0]
-      result.thisWeek[dateStringThisWeek] = 0
-      result.lastWeek[dateStringLastWeek] = 0
+      const dayThisWeek = getDayInitial(dateThisWeek)
+      const dayLastWeek = getDayInitial(dateLastWeek)
+
+      result.thisWeek[dayThisWeek] = 0
+      result.lastWeek[dayLastWeek] = 0
     }
 
     kkhData.forEach((item) => {
-      const dateString = new Date(item.date).toISOString().split('T')[0]
-      if (new Date(item.date) >= startOfThisWeek) {
-        result.thisWeek[dateString] = item.count
+      const dateString = new Date(item.date)
+      const dayString = getDayInitial(dateString)
+
+      if (dateString >= startOfThisWeek) {
+        result.thisWeek[dayString] = item.count
       } else {
-        result.lastWeek[dateString] = item.count
+        result.lastWeek[dayString] = item.count
       }
     })
 

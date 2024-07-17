@@ -51,6 +51,52 @@ const login = async (req, res, next) => {
   }
 }
 
+const loginAdmin = async (req, res, next) => {
+  try {
+    const { username, password } = req.body
+
+    if (!username || !password) {
+      throw new ApiError('Username and password are required', 400)
+    }
+
+    const user = await Auth.findOne({ where: { username }, include: User })
+
+    if (!user) {
+      throw new ApiError('User not found', 404)
+    }
+
+    if (user.User.role !== 'SuperAdmin') {
+      throw new ApiError('You are not an admin', 401)
+    }
+
+    if (user && bcrypt.compareSync(password, user.password)) {
+      const payload = {
+        id: user.id,
+        name: user.User.name,
+        username: user.username,
+        email: user.email,
+        phoneNumber: user.User.phoneNumber,
+        role: user.User.role,
+      }
+      const token = jwt.sign(payload, process.env.JWT_SECRET, {
+        expiresIn: '1h',
+      })
+
+      return res.status(200).json({
+        status: 'success',
+        message: 'Login success',
+        token,
+        payload,
+        role: user.User.role,
+      })
+    } else {
+      return next(new ApiError('Incorrect password', 401))
+    }
+  } catch (err) {
+    next(new ApiError(err.message, 500))
+  }
+}
+
 const registeringMember = async (req, res, next) => {
   try {
     const { username, password, role, phoneNumber, email } = req.body
@@ -94,7 +140,7 @@ const registeringMember = async (req, res, next) => {
       },
     })
 
-    const verificationUrl = `https://6c3f-114-122-201-31.ngrok-free.app/api/v1/auth/verify?token=${token}`
+    const verificationUrl = `http://localhost:9000/api/v1/auth/verify?token=${token}`
 
     const mailOptions = {
       from: process.env.AUTH_EMAIL,
@@ -182,14 +228,20 @@ const registeringMember = async (req, res, next) => {
 
       setTimeout(async () => {
         try {
-          await VerificationToken.destroy({ where: { token } })
+          const userToCheck = await User.findByPk(user.id)
 
-          await User.destroy({ where: { id: user.id } })
-          await Auth.destroy({ where: { userId: user.id } })
+          if (!userToCheck.isVerified) {
+            await VerificationToken.destroy({ where: { token } })
+            await User.destroy({ where: { id: user.id } })
+            await Auth.destroy({ where: { userId: user.id } })
 
-          console.log(
-            `Expired token and associated user data deleted for userId: ${user.id}`
-          )
+            console.log(
+              `Expired token and associated user data deleted for userId: ${user.id}`
+            )
+          } else {
+            await VerificationToken.destroy({ where: { token } })
+            console.log(`Expired token deleted for userId: ${user.id}`)
+          }
         } catch (err) {
           console.error('Error deleting expired token and user data:', err)
         }
@@ -343,7 +395,7 @@ const forgotPassword = async (req, res, next) => {
         pass: process.env.AUTH_PASSWORD,
       },
     })
-    const resetUrl = `http://your-frontend-url/reset-password?token=${token}`
+    const resetUrl = `http://localhost:5173/reset-password?token=${token}`
 
     const mailOptions = {
       from: 'your-email@gmail.com',
@@ -424,6 +476,25 @@ const forgotPassword = async (req, res, next) => {
   }
 }
 
+const resetPassword = async (req, res, next) => {
+  try {
+    const { token, newPassword } = req.body
+
+    if (!newPassword || typeof newPassword !== 'string') {
+      throw new Error('New password is required and must be a string')
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET)
+    const userId = decoded.userId
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10)
+    await Auth.update({ password: hashedPassword }, { where: { id: userId } })
+
+    res.status(200).json({ message: 'Password berhasil direset' })
+  } catch (err) {
+    next(new ApiError(err.message, 500))
+  }
+}
 const getMe = async (req, res, next) => {
   try {
     return res.status(200).json({
@@ -443,8 +514,10 @@ const getMe = async (req, res, next) => {
 
 module.exports = {
   login,
+  loginAdmin,
   registeringMember,
   verifyUser,
   forgotPassword,
+  resetPassword,
   getMe,
 }

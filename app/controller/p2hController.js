@@ -6,8 +6,7 @@ const {
   User,
   InTheCabin,
   Location,
-
-  Timesheet,
+  Kkh,
   Vehicle,
 } = require('../models')
 const { Sequelize, Op } = require('sequelize')
@@ -705,11 +704,25 @@ const createP2hEx = async (req, res, next) => {
 const getAllP2h = async (req, res, next) => {
   try {
     const p2h = await P2hUser.findAll({
-      include: [{ model: P2h }, { model: User }],
+      include: [{ model: P2h, include: [{ model: Vehicle }] }, { model: User }],
     })
     res.status(200).json({
       status: 'success',
       p2h,
+    })
+  } catch (err) {
+    next(new ApiError(err.message, 500))
+  }
+}
+
+const getAllData = async (req, res, next) => {
+  try {
+    const [p2hData, kkhData] = await Promise.all([P2h.findAll(), Kkh.findAll()])
+
+    res.status(200).json({
+      status: 'success',
+      p2hData: p2hData.length,
+      kkhData: kkhData.length,
     })
   } catch (err) {
     next(new ApiError(err.message, 500))
@@ -738,6 +751,11 @@ const getAllP2hGroupedByMonth = async (req, res, next) => {
   try {
     const year = new Date().getFullYear()
 
+    const months = Array.from({ length: 12 }, (_, index) => ({
+      month: index + 1,
+      name: new Date(year, index).toLocaleString('default', { month: 'long' }),
+    }))
+
     const p2hData = await P2h.findAll({
       attributes: [
         [Sequelize.literal('EXTRACT(MONTH FROM "createdAt")'), 'month'],
@@ -745,22 +763,18 @@ const getAllP2hGroupedByMonth = async (req, res, next) => {
       ],
       where: Sequelize.literal(`EXTRACT(YEAR FROM "createdAt") = ${year}`),
       group: [Sequelize.literal('EXTRACT(MONTH FROM "createdAt")')],
-      order: [Sequelize.literal('EXTRACT(MONTH FROM "createdAt") ASC')], // Memastikan pengurutan dari bulan Januari sampai Desember
+      order: [Sequelize.literal('EXTRACT(MONTH FROM "createdAt") ASC')],
       raw: true,
     })
 
     const result = {}
-    const months = Array.from({ length: 12 }, (_, index) => ({
-      month: index + 1,
-      name: new Date(year, index).toLocaleString('default', { month: 'long' }),
-    }))
 
     p2hData.forEach((item) => {
       const monthName = months.find(
         (m) => m.month === parseInt(item.month)
       )?.name
       if (monthName) {
-        result[monthName] = item.count
+        result[monthName] = parseInt(item.count)
       }
     })
 
@@ -769,7 +783,6 @@ const getAllP2hGroupedByMonth = async (req, res, next) => {
         result[month.name] = 0
       }
     })
-
     res.status(200).json({
       status: 'success',
       data: result,
@@ -809,6 +822,17 @@ const getAllP2hForThisAndLastWeek = async (req, res, next) => {
       lastWeek: {},
     }
 
+    // Array of Indonesian day names
+    const daysInIndonesian = [
+      'Minggu',
+      'Senin',
+      'Selasa',
+      'Rabu',
+      'Kamis',
+      'Jumat',
+      'Sabtu',
+    ]
+
     const addDays = (date, days) => {
       const result = new Date(date)
       result.setDate(result.getDate() + days)
@@ -818,18 +842,20 @@ const getAllP2hForThisAndLastWeek = async (req, res, next) => {
     for (let i = 0; i < 7; i++) {
       const dateThisWeek = addDays(startOfThisWeek, i)
       const dateLastWeek = addDays(startOfLastWeek, i)
-      const dateStringThisWeek = dateThisWeek.toISOString().split('T')[0]
-      const dateStringLastWeek = dateLastWeek.toISOString().split('T')[0]
-      result.thisWeek[dateStringThisWeek] = 0
-      result.lastWeek[dateStringLastWeek] = 0
+      const dayIndexThisWeek = dateThisWeek.getDay() // Get day index (0-6)
+      const dayIndexLastWeek = dateLastWeek.getDay() // Get day index (0-6)
+      const dayNameThisWeek = daysInIndonesian[dayIndexThisWeek] // Get day name
+      const dayNameLastWeek = daysInIndonesian[dayIndexLastWeek] // Get day name
+      result.thisWeek[dayNameThisWeek] = 0
+      result.lastWeek[dayNameLastWeek] = 0
     }
 
     p2hData.forEach((item) => {
-      const dateString = new Date(item.date).toISOString().split('T')[0]
+      const dayName = daysInIndonesian[new Date(item.date).getDay()] // Get day name
       if (new Date(item.date) >= startOfThisWeek) {
-        result.thisWeek[dateString] = item.count
+        result.thisWeek[dayName] = item.count
       } else {
-        result.lastWeek[dateString] = item.count
+        result.lastWeek[dayName] = item.count
       }
     })
 
@@ -849,6 +875,7 @@ module.exports = {
   createP2hBus,
   createP2hEx,
   getAllP2h,
+  getAllData,
   getP2hByVehicle,
   getAllP2hGroupedByMonth,
   getAllP2hForThisAndLastWeek,
