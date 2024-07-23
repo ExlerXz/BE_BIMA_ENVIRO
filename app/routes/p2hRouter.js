@@ -13,5 +13,6 @@ router.get('/p2hkkh', P2h.getAllData)
 router.get('/vehicle/:id', P2h.getP2hByVehicle)
 router.get('/month', P2h.getAllP2hGroupedByMonth)
 router.get('/week', P2h.getAllP2hForThisAndLastWeek)
+router.patch('/validate/:id', P2h.validateAdmin)
 
 module.exports = router

@@ -1,4 +1,4 @@
-const { Kkh } = require('../models')
+const { Kkh, User } = require('../models')
 const ApiError = require('../../utils/apiError')
 
 const path = require('path')
@@ -79,7 +79,7 @@ const createKkh = async (req, res, next) => {
 
     if (dayOfWeek === 5 && totalHours >= 4.5) {
       complaint = 'Fit to work'
-    } else if (dayOfWeek === 5 && totalHours < 4) {
+    } else if (dayOfWeek === 5 && totalHours < 4.5) {
       complaint = 'On Monitoring'
     }
 
@@ -104,6 +104,7 @@ const getAllKkh = async (req, res, next) => {
   try {
     const kkh = await Kkh.findAll({
       order: [['createdAt', 'DESC']],
+      include: [{ model: User }],
     })
     res.status(200).json({
       status: 'success',

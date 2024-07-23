@@ -32,9 +32,7 @@ const login = async (req, res, next) => {
         phoneNumber: user.User.phoneNumber,
         role: user.User.role,
       }
-      const token = jwt.sign(payload, process.env.JWT_SECRET, {
-        expiresIn: '1h',
-      })
+      const token = jwt.sign(payload, process.env.JWT_SECRET)
 
       return res.status(200).json({
         status: 'success',
@@ -78,9 +76,7 @@ const loginAdmin = async (req, res, next) => {
         phoneNumber: user.User.phoneNumber,
         role: user.User.role,
       }
-      const token = jwt.sign(payload, process.env.JWT_SECRET, {
-        expiresIn: '1h',
-      })
+      const token = jwt.sign(payload, process.env.JWT_SECRET)
 
       return res.status(200).json({
         status: 'success',
@@ -133,7 +129,9 @@ const registeringMember = async (req, res, next) => {
     })
 
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
+      host: 'smtp.gmail.com',
+      port: 587,
+      secure: false,
       auth: {
         user: process.env.AUTH_EMAIL,
         pass: process.env.AUTH_PASSWORD,
@@ -505,8 +503,40 @@ const getMe = async (req, res, next) => {
         username: req.user.Auth.username,
         email: req.user.Auth.email,
         phoneNumber: req.user.phoneNumber,
+        imageUrl: req.user.imageUrl,
+        role: req.user.role,
       },
     })
+  } catch (err) {
+    next(new ApiError(err.message, 500))
+  }
+}
+
+const changePassword = async (req, res, next) => {
+  const id = req.user.id
+  const { password, newPassword, confirmPassword } = req.body
+  try {
+    const user = await Auth.findOne({
+      where: {
+        userId: id,
+      },
+    })
+    if (!user) {
+      return next(new ApiError('User not found', 404))
+    }
+
+    if (!bcrypt.compareSync(password, user.password)) {
+      return next(new ApiError('Wrong password', 400))
+    }
+
+    if (newPassword !== confirmPassword) {
+      return next(new ApiError('Passwords do not match', 400))
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10)
+    await Auth.update({ password: hashedPassword }, { where: { userId: id } })
+
+    res.status(200).json({ message: 'Change password success' })
   } catch (err) {
     next(new ApiError(err.message, 500))
   }
@@ -519,5 +549,6 @@ module.exports = {
   verifyUser,
   forgotPassword,
   resetPassword,
+  changePassword,
   getMe,
 }

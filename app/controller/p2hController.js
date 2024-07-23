@@ -704,6 +704,7 @@ const createP2hEx = async (req, res, next) => {
 const getAllP2h = async (req, res, next) => {
   try {
     const p2h = await P2hUser.findAll({
+      order: [['createdAt', 'DESC']],
       include: [{ model: P2h, include: [{ model: Vehicle }] }, { model: User }],
     })
     res.status(200).json({
@@ -868,6 +869,26 @@ const getAllP2hForThisAndLastWeek = async (req, res, next) => {
   }
 }
 
+const validateAdmin = async (req, res, next) => {
+  const { id } = req.params
+  try {
+    const p2h = await P2hUser.findOne({ where: { id } })
+
+    if (!p2h) {
+      return next(new ApiError('P2H not found', 404))
+    }
+
+    await P2hUser.update({ aValidation: true }, { where: { id } })
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Validated successfully',
+    })
+  } catch (err) {
+    next(new ApiError(err.message, 500))
+  }
+}
+
 module.exports = {
   createP2hDt,
   createP2hBul,
@@ -879,4 +900,5 @@ module.exports = {
   getP2hByVehicle,
   getAllP2hGroupedByMonth,
   getAllP2hForThisAndLastWeek,
+  validateAdmin,
 }

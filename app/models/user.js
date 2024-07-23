@@ -21,14 +21,28 @@ module.exports = (sequelize, DataTypes) => {
           allowNull: false,
         },
       })
+
+      User.hasMany(models.Kkh, {
+        foreignKey: {
+          name: 'userId',
+          allowNull: false,
+        },
+      })
     }
   }
   User.init(
     {
       name: DataTypes.STRING,
       phoneNumber: DataTypes.STRING,
-      imageUrl: DataTypes.STRING,
-      role: DataTypes.ENUM(['SuperAdmin', 'Admin', 'Forman', 'Driver']),
+      imageUrl: {
+        type: DataTypes.STRING,
+        defaultValue:
+          'https://tse2.mm.bing.net/th?id=OIP.U2iQ7wNK6ZzTW_traW_-PQHaHa&pid=Api&P=0&h=180',
+      },
+      role: {
+        type: DataTypes.ENUM(['SuperAdmin', 'Forman', 'Driver']),
+        defaultValue: 'Driver',
+      },
       isVerified: {
         type: DataTypes.BOOLEAN,
         defaultValue: false,

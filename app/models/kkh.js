@@ -9,7 +9,9 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      // define association here
+      Kkh.belongsTo(models.User, {
+        foreignKey: 'userId',
+      })
     }
   }
   Kkh.init(
@@ -22,8 +24,8 @@ module.exports = (sequelize, DataTypes) => {
       totaltime: DataTypes.STRING,
       departuretime: DataTypes.STRING,
       complaint: DataTypes.STRING,
-      wValidation: DataTypes.BOOLEAN,
-      fValidation: DataTypes.BOOLEAN,
+      wValidation: { type: DataTypes.BOOLEAN, defaultValue: false },
+      fValidation: { type: DataTypes.BOOLEAN, defaultValue: false },
       imageUrl: DataTypes.STRING,
       updatedAt: {
         type: DataTypes.STRING,

@@ -49,7 +49,7 @@ const updateUser = async (req, res, next) => {
 
       await Auth.update({ ...authUpdateData }, { where: { userId: id } })
     }
-    res.status(200).json({ user: updatedUser[1][0] })
+    res.status(200).json({ user:  updatedUser[1][0] })
   } catch (err) {
     next(new ApiError(err.message, 500))
   }
