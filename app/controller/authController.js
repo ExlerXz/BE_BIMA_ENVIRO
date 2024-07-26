@@ -34,7 +34,7 @@ const login = async (req, res, next) => {
       }
       const token = jwt.sign(payload, process.env.JWT_SECRET)
 
-      return res.status(200).json({
+      return res.status(201).json({
         status: 'success',
         message: 'Login success',
         token,
@@ -215,7 +215,7 @@ const registeringMember = async (req, res, next) => {
           .status(500)
           .json({ message: 'Failed to send verification email' })
       }
-      res.status(200).json({
+      res.status(201).json({
         status: 'success',
         message: 'Register success. Verification email sent.',
         data: {
@@ -371,11 +371,11 @@ const forgotPassword = async (req, res, next) => {
   try {
     const { email } = req.body
     if (!email) {
-      throw new ApiError('Email is required', 400)
+      return next(new ApiError('Email is required', 400))
     }
     const user = await Auth.findOne({ where: { email } })
     if (!user) {
-      throw new ApiError('Email Not Found', 404)
+      return next(new ApiError('Email Not Found', 404))
     }
     const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
       expiresIn: '1h',
@@ -387,7 +387,9 @@ const forgotPassword = async (req, res, next) => {
     })
 
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
+      host: 'smtp.gmail.com',
+      port: 587,
+      secure: false,
       auth: {
         user: process.env.AUTH_EMAIL,
         pass: process.env.AUTH_PASSWORD,
@@ -467,7 +469,10 @@ const forgotPassword = async (req, res, next) => {
         console.error(error)
         return res.status(500).json({ message: 'Gagal mengirim email' })
       }
-      res.status(200).json({ message: 'Email reset password telah dikirim' })
+      res.status(201).json({
+        status: 'success',
+        message: 'Email reset password telah dikirim',
+      })
     })
   } catch (err) {
     next(new ApiError(err.message, 500))
