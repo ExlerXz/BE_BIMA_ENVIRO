@@ -13,6 +13,8 @@ module.exports = (sequelize, DataTypes) => {
   }
   Location.init(
     {
+      userId: DataTypes.INTEGER,
+      date: DataTypes.STRING,
       pit: DataTypes.STRING,
       disposal: DataTypes.STRING,
       location: DataTypes.STRING,

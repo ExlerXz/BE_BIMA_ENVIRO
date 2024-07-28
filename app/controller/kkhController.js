@@ -3,7 +3,7 @@ const ApiError = require('../../utils/apiError')
 
 const path = require('path')
 const imagekit = require('../lib/imagekit')
-const { Sequelize, Op } = require('sequelize')
+const { Sequelize, Op, where } = require('sequelize')
 
 const createKkh = async (req, res, next) => {
   const kkhBody = req.body
@@ -216,7 +216,6 @@ const getAllKkhForThisAndLastWeek = async (req, res, next) => {
       return result
     }
 
-    // Function to get day initials
     const getDayInitial = (date) => {
       const days = [
         'Minggu',
@@ -260,10 +259,31 @@ const getAllKkhForThisAndLastWeek = async (req, res, next) => {
   }
 }
 
+const getLastCreated = async (req, res, next) => {
+  try {
+    const kkh = await Kkh.findOne({
+      where: {
+        userId: req.user.id,
+      },
+      order: [['createdAt', 'DESC']],
+    })
+    if (!kkh) {
+      return next(new ApiError('kkh not found', 404))
+    }
+    res.status(200).json({
+      status: 'success',
+      kkh,
+    })
+  } catch (err) {
+    next(new ApiError(err.message, 500))
+  }
+}
+
 module.exports = {
   createKkh,
   getAllKkh,
   getKkhById,
   getAllKkhGroupedByMonth,
   getAllKkhForThisAndLastWeek,
+  getLastCreated,
 }

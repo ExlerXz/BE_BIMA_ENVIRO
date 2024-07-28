@@ -26,7 +26,7 @@ module.exports = (sequelize, DataTypes) => {
       name: DataTypes.STRING,
       userId: DataTypes.INTEGER,
       p2hId: DataTypes.INTEGER,
-      dValidation: { type: DataTypes.BOOLEAN, defaultValue: false },
+      dValidation: { type: DataTypes.BOOLEAN, defaultValue: true },
       mValidation: { type: DataTypes.BOOLEAN, defaultValue: false },
       fValidation: { type: DataTypes.BOOLEAN, defaultValue: false },
       aValidation: { type: DataTypes.BOOLEAN, defaultValue: false },

@@ -21,6 +21,13 @@ module.exports = (sequelize, DataTypes) => {
           allowNull: false,
         },
       })
+
+      P2h.belongsTo(models.AroundUnit, {
+        foreignKey: {
+          name: 'idAroundUnit',
+          allowNull: false,
+        },
+      })
     }
   }
   P2h.init(

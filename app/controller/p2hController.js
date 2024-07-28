@@ -113,9 +113,19 @@ const createP2hDt = async (req, res, next) => {
     ]
     const monthIndex = currentDate.getMonth()
     const month = monthNames[monthIndex]
-
     const year = currentDate.getFullYear()
-    const formattedDate = `${day} ${month} ${year}`
+    const dayNames = [
+      'Minggu',
+      'Senin',
+      'Selasa',
+      'Rabu',
+      'Kamis',
+      'Jumat',
+      'Sabtu',
+    ]
+    const dayOfWeek = currentDate.getDay()
+    const dayName = dayNames[dayOfWeek]
+    const formattedDate = `${dayName}, ${day} ${month} ${year}`
 
     const p2h = await P2h.create({
       idAroundUnit: aroundUnit.id,
@@ -240,10 +250,20 @@ const createP2hBul = async (req, res, next) => {
     ]
     const monthIndex = currentDate.getMonth()
     const month = monthNames[monthIndex]
-
     const year = currentDate.getFullYear()
+    const dayNames = [
+      'Minggu',
+      'Senin',
+      'Selasa',
+      'Rabu',
+      'Kamis',
+      'Jumat',
+      'Sabtu',
+    ]
+    const dayOfWeek = currentDate.getDay()
+    const dayName = dayNames[dayOfWeek]
+    const formattedDate = `${dayName}, ${day} ${month} ${year}`
 
-    const formattedDate = `${day} ${month} ${year}`
     const p2h = await P2h.create({
       idAroundUnit: aroundUnit.id,
       idInTheCabin: inTheCabin.id,
@@ -272,6 +292,9 @@ const createP2hBul = async (req, res, next) => {
       message: 'P2h created',
       p2h,
       p2hUser,
+      aroundUnit,
+      inTheCabin,
+      machineRoom,
     })
   } catch (err) {
     next(new ApiError(err.message, 500))
@@ -383,7 +406,18 @@ const createP2hLv = async (req, res, next) => {
     const monthIndex = currentDate.getMonth()
     const month = monthNames[monthIndex]
     const year = currentDate.getFullYear()
-    const formattedDate = `${day} ${month} ${year}`
+    const dayNames = [
+      'Minggu',
+      'Senin',
+      'Selasa',
+      'Rabu',
+      'Kamis',
+      'Jumat',
+      'Sabtu',
+    ]
+    const dayOfWeek = currentDate.getDay()
+    const dayName = dayNames[dayOfWeek]
+    const formattedDate = `${dayName}, ${day} ${month} ${year}`
 
     const p2h = await P2h.create({
       idAroundUnit: aroundUnit.id,
@@ -520,7 +554,18 @@ const createP2hBus = async (req, res, next) => {
     const monthIndex = currentDate.getMonth()
     const month = monthNames[monthIndex]
     const year = currentDate.getFullYear()
-    const formattedDate = `${day} ${month} ${year}`
+    const dayNames = [
+      'Minggu',
+      'Senin',
+      'Selasa',
+      'Rabu',
+      'Kamis',
+      'Jumat',
+      'Sabtu',
+    ]
+    const dayOfWeek = currentDate.getDay()
+    const dayName = dayNames[dayOfWeek]
+    const formattedDate = `${dayName}, ${day} ${month} ${year}`
 
     const p2h = await P2h.create({
       idAroundUnit: aroundUnit.id,
@@ -593,11 +638,6 @@ const createP2hEx = async (req, res, next) => {
     earlyhm,
     endhm,
     kbj,
-    pit,
-    disposal,
-    location,
-    fuel,
-    fuelhm,
     idVehicle,
   } = req.body
 
@@ -639,14 +679,6 @@ const createP2hEx = async (req, res, next) => {
       oe,
     })
 
-    const lokasi = await Location.create({
-      pit,
-      disposal,
-      location,
-      fuel,
-      fuelhm,
-    })
-
     const currentDate = new Date()
     const day = currentDate.getDate()
     const monthNames = [
@@ -666,13 +698,23 @@ const createP2hEx = async (req, res, next) => {
     const monthIndex = currentDate.getMonth()
     const month = monthNames[monthIndex]
     const year = currentDate.getFullYear()
-    const formattedDate = `${day} ${month} ${year}`
+    const dayNames = [
+      'Minggu',
+      'Senin',
+      'Selasa',
+      'Rabu',
+      'Kamis',
+      'Jumat',
+      'Sabtu',
+    ]
+    const dayOfWeek = currentDate.getDay()
+    const dayName = dayNames[dayOfWeek]
+    const formattedDate = `${dayName}, ${day} ${month} ${year}`
 
     const p2h = await P2h.create({
       idAroundUnit: aroundUnit.id,
       idInTheCabin: inTheCabin.id,
       idMachineRoom: machineRoom.id,
-      idLocation: lokasi.id,
       idVehicle,
       modelu,
       nou,
@@ -695,6 +737,61 @@ const createP2hEx = async (req, res, next) => {
       message: 'P2h created',
       p2h,
       p2hUser,
+    })
+  } catch (err) {
+    next(new ApiError(err.message, 500))
+  }
+}
+
+const createLocation = async (req, res, next) => {
+  const { pit, disposal, location, fuel, fuelhm } = req.body
+  try {
+    const currentDate = new Date()
+    const day = currentDate.getDate()
+    const monthNames = [
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember',
+    ]
+    const monthIndex = currentDate.getMonth()
+    const month = monthNames[monthIndex]
+    const year = currentDate.getFullYear()
+    const dayNames = [
+      'Minggu',
+      'Senin',
+      'Selasa',
+      'Rabu',
+      'Kamis',
+      'Jumat',
+      'Sabtu',
+    ]
+    const dayOfWeek = currentDate.getDay()
+    const dayName = dayNames[dayOfWeek]
+    const formattedDate = `${dayName}, ${day} ${month} ${year}`
+
+    const lokasi = await Location.create({
+      userId: req.user.id,
+      date: formattedDate,
+      pit,
+      disposal,
+      location,
+      fuel,
+      fuelhm,
+    })
+
+    return res.status(201).json({
+      status: 'success',
+      message: 'Location created',
+      lokasi,
     })
   } catch (err) {
     next(new ApiError(err.message, 500))
@@ -737,7 +834,7 @@ const getP2hByVehicle = async (req, res, next) => {
       where: {
         idVehicle: id,
       },
-      include: { model: Vehicle },
+      include: { model: Vehicle, model: AroundUnit },
     })
     res.status(200).json({
       status: 'success',
@@ -889,16 +986,39 @@ const validateAdmin = async (req, res, next) => {
   }
 }
 
+const getLastCreatedByUser = async (req, res, next) => {
+  try {
+    const lastP2h = await P2hUser.findOne({
+      where: { userId: req.user.id },
+      order: [['createdAt', 'DESC']],
+      include: { model: P2h },
+    })
+
+    if (!lastP2h) {
+      return next(new ApiError('No P2h found for this user', 404))
+    }
+
+    res.status(200).json({
+      status: 'success',
+      lastP2h,
+    })
+  } catch (err) {
+    next(new ApiError(err.message, 500))
+  }
+}
+
 module.exports = {
   createP2hDt,
   createP2hBul,
   createP2hLv,
   createP2hBus,
   createP2hEx,
+  createLocation,
   getAllP2h,
   getAllData,
   getP2hByVehicle,
   getAllP2hGroupedByMonth,
   getAllP2hForThisAndLastWeek,
   validateAdmin,
+  getLastCreatedByUser,
 }
