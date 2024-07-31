@@ -16,5 +16,6 @@ router.get('/month', P2h.getAllP2hGroupedByMonth)
 router.get('/week', P2h.getAllP2hForThisAndLastWeek)
 router.patch('/validate/:id', P2h.validateAdmin)
 router.get('/last', authentication, P2h.getLastCreatedByUser)
+router.get('/length', P2h.getLength)
 
 module.exports = router

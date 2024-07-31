@@ -53,6 +53,9 @@ const createP2hDt = async (req, res, next) => {
     endkm,
     kbj,
     idVehicle,
+    ntsAroundU,
+    ntsInTheCabinU,
+    ntsMachineRoom,
   } = req.body
 
   try {
@@ -142,6 +145,9 @@ const createP2hDt = async (req, res, next) => {
       earlykm,
       endkm,
       kbj,
+      ntsAroundU,
+      ntsInTheCabinU,
+      ntsMachineRoom,
     })
 
     const p2hUser = await P2hUser.create({
@@ -196,6 +202,9 @@ const createP2hBul = async (req, res, next) => {
     jobsite,
     location,
     idVehicle,
+    ntsAroundU,
+    ntsInTheCabinU,
+    ntsMachineRoom,
   } = req.body
   try {
     const aroundUnit = await AroundUnit.create({
@@ -279,6 +288,9 @@ const createP2hBul = async (req, res, next) => {
       kbj,
       jobsite,
       location,
+      ntsAroundU,
+      ntsInTheCabinU,
+      ntsMachineRoom,
     })
 
     const p2hUser = await P2hUser.create({
@@ -345,6 +357,9 @@ const createP2hLv = async (req, res, next) => {
     jobsite,
     location,
     idVehicle,
+    ntsAroundU,
+    ntsInTheCabinU,
+    ntsMachineRoom,
   } = req.body
 
   try {
@@ -434,6 +449,9 @@ const createP2hLv = async (req, res, next) => {
       kbj,
       jobsite,
       location,
+      ntsAroundU,
+      ntsInTheCabinU,
+      ntsMachineRoom,
     })
 
     const p2hUser = await P2hUser.create({
@@ -494,6 +512,9 @@ const createP2hBus = async (req, res, next) => {
     jobsite,
     location,
     idVehicle,
+    ntsAroundU,
+    ntsInTheCabinU,
+    ntsMachineRoom,
   } = req.body
 
   try {
@@ -582,6 +603,9 @@ const createP2hBus = async (req, res, next) => {
       kbj,
       jobsite,
       location,
+      ntsAroundU,
+      ntsInTheCabinU,
+      ntsMachineRoom,
     })
 
     const p2hUser = await P2hUser.create({
@@ -639,6 +663,9 @@ const createP2hEx = async (req, res, next) => {
     endhm,
     kbj,
     idVehicle,
+    ntsAroundU,
+    ntsInTheCabinU,
+    ntsMachineRoom,
   } = req.body
 
   try {
@@ -724,6 +751,9 @@ const createP2hEx = async (req, res, next) => {
       earlyhm,
       endhm,
       kbj,
+      ntsAroundU,
+      ntsInTheCabinU,
+      ntsMachineRoom,
     })
 
     const p2hUser = await P2hUser.create({
@@ -1007,6 +1037,15 @@ const getLastCreatedByUser = async (req, res, next) => {
   }
 }
 
+const getLength = async (req, res, next) => {
+  try {
+    const count = await P2h.count()
+    res.status(200).json({ length: count })
+  } catch (err) {
+    next(new ApiError(err.message, 500))
+  }
+}
+
 module.exports = {
   createP2hDt,
   createP2hBul,
@@ -1021,4 +1060,5 @@ module.exports = {
   getAllP2hForThisAndLastWeek,
   validateAdmin,
   getLastCreatedByUser,
+  getLength,
 }

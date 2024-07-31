@@ -279,6 +279,15 @@ const getLastCreated = async (req, res, next) => {
   }
 }
 
+const getLength = async (req, res, next) => {
+  try {
+    const count = await Kkh.count()
+    res.status(200).json({ length: count })
+  } catch (err) {
+    next(new ApiError(err.message, 500))
+  }
+}
+
 module.exports = {
   createKkh,
   getAllKkh,
@@ -286,4 +295,5 @@ module.exports = {
   getAllKkhGroupedByMonth,
   getAllKkhForThisAndLastWeek,
   getLastCreated,
+  getLength,
 }

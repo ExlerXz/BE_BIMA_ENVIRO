@@ -10,5 +10,6 @@ router.get('/byId', authentication, Kkh.getKkhById)
 router.get('/mounth', Kkh.getAllKkhGroupedByMonth)
 router.get('/week', Kkh.getAllKkhForThisAndLastWeek)
 router.get('/last', authentication, Kkh.getLastCreated)
+router.get('/length', Kkh.getLength)
 
 module.exports = router
