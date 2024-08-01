@@ -8,7 +8,12 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      // define association here
+      Timesheet.belongsTo(models.Location, {
+        foreignKey: {
+          name: 'idLocation',
+          allowNull: false,
+        },
+      })
     }
   }
   Timesheet.init(

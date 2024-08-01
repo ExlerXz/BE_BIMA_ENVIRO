@@ -8,7 +8,12 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      // define association here
+      Location.hasMany(models.Timesheet, {
+        foreignKey: {
+          name: 'idLocation',
+          allowNull: false,
+        },
+      })
     }
   }
   Location.init(
@@ -20,6 +25,8 @@ module.exports = (sequelize, DataTypes) => {
       location: DataTypes.STRING,
       fuel: DataTypes.STRING,
       fuelhm: DataTypes.STRING,
+      postscript: DataTypes.TEXT,
+      stopOperation: DataTypes.STRING,
     },
     {
       sequelize,

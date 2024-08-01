@@ -8,6 +8,7 @@ const {
   Location,
   Kkh,
   Vehicle,
+  Timesheet,
 } = require('../models')
 const { Sequelize, Op } = require('sequelize')
 const ApiError = require('../../utils/apiError')
@@ -828,6 +829,41 @@ const createLocation = async (req, res, next) => {
   }
 }
 
+const updateLocation = async (req, res, next) => {
+  const { id } = req.params
+  try {
+    await Location.update(req.body, { where: { id } })
+
+    if (!id) return new ApiError('Location not found', 404)
+
+    const lokasi = await Location.findOne({ where: { id } })
+
+    res.status(201).json({
+      status: 'success',
+      message: 'Location updated',
+      lokasi,
+    })
+  } catch (err) {
+    next(new ApiError(err.message, 500))
+  }
+}
+
+const getAllLocation = async (req, res, next) => {
+  try {
+    const lokasi = await Location.findAll({
+      order: [['createdAt', 'DESC']],
+      include: { model: Timesheet },
+    })
+
+    res.status(200).json({
+      status: 'success',
+      lokasi,
+    })
+  } catch (err) {
+    next(new ApiError(err.message, 500))
+  }
+}
+
 const getAllP2h = async (req, res, next) => {
   try {
     const p2h = await P2hUser.findAll({
@@ -1053,6 +1089,8 @@ module.exports = {
   createP2hBus,
   createP2hEx,
   createLocation,
+  updateLocation,
+  getAllLocation,
   getAllP2h,
   getAllData,
   getP2hByVehicle,
