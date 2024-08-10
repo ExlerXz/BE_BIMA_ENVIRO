@@ -819,10 +819,23 @@ const createLocation = async (req, res, next) => {
       fuelhm,
     })
 
+    const p2h = await P2h.findOne({
+      where: {
+        date: formattedDate,
+      },
+    })
+
+    if (p2h) {
+      await p2h.update({
+        idLocation: lokasi.id,
+      })
+    }
+
     return res.status(201).json({
       status: 'success',
-      message: 'Location created',
+      message: 'Location created and P2h updated',
       lokasi,
+      p2hUpdated: !!p2h,
     })
   } catch (err) {
     next(new ApiError(err.message, 500))
@@ -868,7 +881,18 @@ const getAllP2h = async (req, res, next) => {
   try {
     const p2h = await P2hUser.findAll({
       order: [['createdAt', 'DESC']],
-      include: [{ model: P2h, include: [{ model: Vehicle }] }, { model: User }],
+      include: [
+        {
+          model: P2h,
+          include: [
+            { model: Vehicle },
+            { model: AroundUnit },
+            { model: MachineRoom },
+            { model: InTheCabin },
+          ],
+        },
+        { model: User },
+      ],
     })
     res.status(200).json({
       status: 'success',
@@ -985,8 +1009,6 @@ const getAllP2hForThisAndLastWeek = async (req, res, next) => {
       thisWeek: {},
       lastWeek: {},
     }
-
-    // Array of Indonesian day names
     const daysInIndonesian = [
       'Minggu',
       'Senin',
@@ -1006,16 +1028,16 @@ const getAllP2hForThisAndLastWeek = async (req, res, next) => {
     for (let i = 0; i < 7; i++) {
       const dateThisWeek = addDays(startOfThisWeek, i)
       const dateLastWeek = addDays(startOfLastWeek, i)
-      const dayIndexThisWeek = dateThisWeek.getDay() // Get day index (0-6)
-      const dayIndexLastWeek = dateLastWeek.getDay() // Get day index (0-6)
-      const dayNameThisWeek = daysInIndonesian[dayIndexThisWeek] // Get day name
-      const dayNameLastWeek = daysInIndonesian[dayIndexLastWeek] // Get day name
+      const dayIndexThisWeek = dateThisWeek.getDay()
+      const dayIndexLastWeek = dateLastWeek.getDay()
+      const dayNameThisWeek = daysInIndonesian[dayIndexThisWeek]
+      const dayNameLastWeek = daysInIndonesian[dayIndexLastWeek]
       result.thisWeek[dayNameThisWeek] = 0
       result.lastWeek[dayNameLastWeek] = 0
     }
 
     p2hData.forEach((item) => {
-      const dayName = daysInIndonesian[new Date(item.date).getDay()] // Get day name
+      const dayName = daysInIndonesian[new Date(item.date).getDay()]
       if (new Date(item.date) >= startOfThisWeek) {
         result.thisWeek[dayName] = item.count
       } else {
@@ -1054,6 +1076,12 @@ const validateAdmin = async (req, res, next) => {
 
 const getLastCreatedByUser = async (req, res, next) => {
   try {
+    console.log('User ID:', req.user.id) // Log ID pengguna
+
+    if (!Number.isInteger(req.user.id)) {
+      return next(new ApiError('Invalid user ID', 400))
+    }
+
     const lastP2h = await P2hUser.findOne({
       where: { userId: req.user.id },
       order: [['createdAt', 'DESC']],
@@ -1082,6 +1110,103 @@ const getLength = async (req, res, next) => {
   }
 }
 
+const getAllP2hById = async (req, res, next) => {
+  try {
+    const p2h = await P2hUser.findAll({
+      where: { userId: req.user.id },
+      order: [['createdAt', 'DESC']],
+      include: [
+        {
+          model: P2h,
+          include: [
+            { model: Vehicle },
+            { model: AroundUnit },
+            { model: MachineRoom },
+            { model: InTheCabin },
+          ],
+        },
+        { model: User },
+      ],
+    })
+    res.status(200).json({
+      status: 'success',
+      p2h,
+    })
+  } catch (err) {
+    next(new ApiError(err.message, 500))
+  }
+}
+
+const getP2hById = async (req, res, next) => {
+  const { id } = req.params
+  try {
+    const Pph = await P2h.findOne({
+      where: { id },
+      include: [
+        { model: Vehicle },
+        { model: AroundUnit },
+        { model: MachineRoom },
+        { model: InTheCabin },
+      ],
+    })
+
+    if (!Pph) {
+      return next(new ApiError('P2h not found', 404))
+    }
+
+    res.status(200).json({
+      status: 'success',
+      Pph,
+    })
+  } catch (err) {
+    next(new ApiError(err.message, 500))
+  }
+}
+
+const validationForeman = async (req, res, next) => {
+  const { id } = req.params
+  try {
+    await P2hUser.update({ fValidation: true }, { where: { id } })
+    res.status(200).json({
+      status: 'success',
+      message: 'Validated successfully',
+    })
+  } catch (err) {
+    next(new ApiError(err.message, 500))
+  }
+}
+
+const addNotesF = async (req, res, next) => {
+  const { id } = req.params
+  const p2hBody = req.body
+  try {
+    await P2h.update({ ...p2hBody }, { where: { id } })
+    res.status(200).json({
+      status: 'success',
+      message: 'Notes added successfully',
+    })
+  } catch (err) {
+    next(new ApiError(err.message, 500))
+  }
+}
+
+const getLocationById = async (req, res, next) => {
+  const { id } = req.params
+  try {
+    const lokasi = await Location.findOne({
+      where: { id },
+      include: { model: Timesheet },
+    })
+
+    res.status(200).json({
+      status: 'success',
+      lokasi,
+    })
+  } catch (err) {
+    next(new ApiError(err.message, 500))
+  }
+}
+
 module.exports = {
   createP2hDt,
   createP2hBul,
@@ -1090,13 +1215,18 @@ module.exports = {
   createP2hEx,
   createLocation,
   updateLocation,
+  validateAdmin,
+  validationForeman,
+  addNotesF,
   getAllLocation,
+  getLocationById,
   getAllP2h,
+  getAllP2hById,
   getAllData,
   getP2hByVehicle,
+  getP2hById,
   getAllP2hGroupedByMonth,
   getAllP2hForThisAndLastWeek,
-  validateAdmin,
   getLastCreatedByUser,
   getLength,
 }

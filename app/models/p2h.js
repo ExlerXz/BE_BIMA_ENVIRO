@@ -28,6 +28,20 @@ module.exports = (sequelize, DataTypes) => {
           allowNull: false,
         },
       })
+
+      P2h.belongsTo(models.InTheCabin, {
+        foreignKey: {
+          name: 'idInTheCabin',
+          allowNull: false,
+        },
+      })
+
+      P2h.belongsTo(models.MachineRoom, {
+        foreignKey: {
+          name: 'idMachineRoom',
+          allowNull: false,
+        },
+      })
     }
   }
   P2h.init(
@@ -40,6 +54,9 @@ module.exports = (sequelize, DataTypes) => {
       ntsAroundU: { type: DataTypes.STRING, allowNull: true },
       ntsInTheCabinU: { type: DataTypes.STRING, allowNull: true },
       ntsMachineRoom: { type: DataTypes.STRING, allowNull: true },
+      ntsAroundUf: { type: DataTypes.STRING, allowNull: true },
+      ntsInTheCabinUf: { type: DataTypes.STRING, allowNull: true },
+      ntsMachineRoomf: { type: DataTypes.STRING, allowNull: true },
       modelu: DataTypes.STRING,
       nou: DataTypes.STRING,
       date: DataTypes.STRING,

@@ -8,7 +8,12 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      // define association here
+      MachineRoom.hasOne(models.P2h, {
+        foreignKey: {
+          name: 'idMachineRoom',
+          allowNull: false,
+        },
+      })
     }
   }
   MachineRoom.init(
