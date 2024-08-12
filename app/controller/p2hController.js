@@ -336,7 +336,7 @@ const createP2hLv = async (req, res, next) => {
     fsl,
     frl,
     fm,
-    fwadw,
+    fwdaw,
     fkp,
     fh,
     feapar,
@@ -387,7 +387,7 @@ const createP2hLv = async (req, res, next) => {
       fsl,
       frl,
       fm,
-      fwadw,
+      fwdaw,
       fkp,
       fh,
       feapar,
@@ -1076,14 +1076,7 @@ const validateAdmin = async (req, res, next) => {
 
 const getLastCreatedByUser = async (req, res, next) => {
   try {
-    console.log('User ID:', req.user.id) // Log ID pengguna
-
-    if (!Number.isInteger(req.user.id)) {
-      return next(new ApiError('Invalid user ID', 400))
-    }
-
     const lastP2h = await P2hUser.findOne({
-      where: { userId: req.user.id },
       order: [['createdAt', 'DESC']],
       include: { model: P2h },
     })

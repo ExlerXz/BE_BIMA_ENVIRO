@@ -2,6 +2,7 @@ const { User, Auth } = require('../models')
 const ApiError = require('../../utils/apiError')
 const path = require('path')
 const imagekit = require('../lib/imagekit')
+const { where } = require('sequelize')
 
 const getAllUser = async (req, res, next) => {
   try {
@@ -14,8 +15,26 @@ const getAllUser = async (req, res, next) => {
   }
 }
 
+const getById = async (req, res, next) => {
+  try {
+    const user = await User.findOne({
+      where: {
+        id: req.user.id,
+      },
+      include: Auth,
+    })
+
+    res.status(200).json({
+      status: 'success',
+      user,
+    })
+  } catch (err) {
+    next(new ApiError(err.message, 500))
+  }
+}
+
 const updateUser = async (req, res, next) => {
-  const id = req.params.id
+  const id = req.user.id
   const user = await User.findOne({
     where: {
       id,
@@ -49,7 +68,7 @@ const updateUser = async (req, res, next) => {
 
       await Auth.update({ ...authUpdateData }, { where: { userId: id } })
     }
-    res.status(200).json({ user:  updatedUser[1][0] })
+    res.status(200).json({ user: updatedUser[1][0] })
   } catch (err) {
     next(new ApiError(err.message, 500))
   }
@@ -87,4 +106,4 @@ const deleteMember = async (req, res, next) => {
   }
 }
 
-module.exports = { getAllUser, updateUser, deleteMember }
+module.exports = { getAllUser, getById, updateUser, deleteMember }

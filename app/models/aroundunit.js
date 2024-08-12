@@ -48,6 +48,8 @@ module.exports = (sequelize, DataTypes) => {
       dong: DataTypes.BOOLEAN,
       kr: DataTypes.BOOLEAN,
       kso: DataTypes.BOOLEAN,
+      ops: DataTypes.BOOLEAN,
+      sk: DataTypes.BOOLEAN,
     },
     {
       sequelize,
