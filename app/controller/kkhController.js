@@ -303,8 +303,29 @@ const getAllById = async (req, res, next) => {
   }
 }
 
+const validationForeman = async (req, res, next) => {
+  const { id } = req.params
+  try {
+    const kkh = await Kkh.findOne({ where: { id } })
+
+    if (!kkh) {
+      return next(new ApiError('kkh not found', 404))
+    }
+
+    await Kkh.update({ fValidation: true }, { where: { id } })
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Validated successfully',
+    })
+  } catch (err) {
+    next(new ApiError(err.message, 500))
+  }
+}
+
 module.exports = {
   createKkh,
+  validationForeman,
   getAllKkh,
   getKkhById,
   getAllKkhGroupedByMonth,

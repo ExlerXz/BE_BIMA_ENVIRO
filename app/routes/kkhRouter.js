@@ -5,6 +5,7 @@ const authentication = require('../middlewares/authentication')
 const multer = require('../middlewares/multer')
 
 router.post('/', authentication, multer.single('imageUrl'), Kkh.createKkh)
+router.patch('/:id', Kkh.validationForeman)
 router.get('/', Kkh.getAllKkh)
 router.get('/allId', authentication, Kkh.getAllById)
 router.get('/byId', authentication, Kkh.getKkhById)

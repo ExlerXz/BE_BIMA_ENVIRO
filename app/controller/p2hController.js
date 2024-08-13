@@ -1159,7 +1159,19 @@ const getP2hById = async (req, res, next) => {
 const validationForeman = async (req, res, next) => {
   const { id } = req.params
   try {
-    await P2hUser.update({ fValidation: true }, { where: { id } })
+    if (!id) {
+      return next(new ApiError('P2hUser ID is required', 400))
+    }
+
+    const [affectedRows] = await P2hUser.update(
+      { fValidation: true },
+      { where: { id } }
+    )
+
+    if (affectedRows === 0) {
+      return next(new ApiError('P2hUser not found', 404))
+    }
+
     res.status(200).json({
       status: 'success',
       message: 'Validated successfully',
