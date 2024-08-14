@@ -27,7 +27,7 @@ module.exports = (sequelize, DataTypes) => {
       wValidation: { type: DataTypes.BOOLEAN, defaultValue: false },
       fValidation: { type: DataTypes.BOOLEAN, defaultValue: false },
       imageUrl: DataTypes.STRING,
-      updatedAt: {
+      createdAt: {
         type: DataTypes.STRING,
         defaultValue: () =>
           moment().tz('Asia/Makassar').format('YYYY-MM-DDTHH:mm:ss.SSSZ'),
@@ -37,11 +37,11 @@ module.exports = (sequelize, DataTypes) => {
       sequelize,
       modelName: 'Kkh',
       hooks: {
-        beforeUpdate: (kkh, options) => {
-          kkh.updatedAt = moment()
+        beforeCreate: (kkh, options) => {
+          kkh.createdAt = moment()
             .tz('Asia/Makassar')
             .format('YYYY-MM-DDTHH:mm:ss.SSSZ')
-          console.log('Hook beforeUpdate - updatedAt:', kkh.updatedAt)
+          console.log('Hook beforeCreate - createdAt:', kkh.createdAt)
         },
       },
     }
