@@ -819,23 +819,10 @@ const createLocation = async (req, res, next) => {
       fuelhm,
     })
 
-    const p2h = await P2h.findOne({
-      where: {
-        date: formattedDate,
-      },
-    })
-
-    if (p2h) {
-      await p2h.update({
-        idLocation: lokasi.id,
-      })
-    }
-
     return res.status(201).json({
       status: 'success',
       message: 'Location created and P2h updated',
       lokasi,
-      p2hUpdated: !!p2h,
     })
   } catch (err) {
     next(new ApiError(err.message, 500))
@@ -854,22 +841,6 @@ const updateLocation = async (req, res, next) => {
     res.status(201).json({
       status: 'success',
       message: 'Location updated',
-      lokasi,
-    })
-  } catch (err) {
-    next(new ApiError(err.message, 500))
-  }
-}
-
-const getAllLocation = async (req, res, next) => {
-  try {
-    const lokasi = await Location.findAll({
-      order: [['createdAt', 'DESC']],
-      include: { model: Timesheet },
-    })
-
-    res.status(200).json({
-      status: 'success',
       lokasi,
     })
   } catch (err) {
@@ -1130,10 +1101,12 @@ const getAllP2hById = async (req, res, next) => {
   }
 }
 
-const getP2hById = async (req, res, next) => {
+const getP2hByIdWithLocation = async (req, res, next) => {
   const { id } = req.params
+  const userId = req.user.id
   try {
-    const Pph = await P2h.findOne({
+    // Fetch the P2h record by ID
+    const p2h = await P2h.findOne({
       where: { id },
       include: [
         { model: Vehicle },
@@ -1143,13 +1116,30 @@ const getP2hById = async (req, res, next) => {
       ],
     })
 
-    if (!Pph) {
+    if (!p2h) {
       return next(new ApiError('P2h not found', 404))
     }
 
+    // Extract date and userId from the P2h data
+    const { date } = p2h
+
+    // Fetch the related location data using date and userId
+    const location = await Location.findOne({
+      where: {
+        date, // Assuming `date` is stored in a format like YYYY-MM-DD
+        userId, // Match the location based on the userId
+      },
+    })
+
+    if (!location) {
+      return next(new ApiError('Location not found', 404))
+    }
+
+    // Combine the P2h and Location data
     res.status(200).json({
       status: 'success',
-      Pph,
+      p2h,
+      location,
     })
   } catch (err) {
     next(new ApiError(err.message, 500))
@@ -1195,6 +1185,22 @@ const addNotesF = async (req, res, next) => {
   }
 }
 
+const getAllLocation = async (req, res, next) => {
+  try {
+    const lokasi = await Location.findAll({
+      order: [['createdAt', 'DESC']],
+      include: [{ model: Timesheet }, { model: User }],
+    })
+
+    res.status(200).json({
+      status: 'success',
+      lokasi,
+    })
+  } catch (err) {
+    next(new ApiError(err.message, 500))
+  }
+}
+
 const getLocationById = async (req, res, next) => {
   const { id } = req.params
   try {
@@ -1229,7 +1235,7 @@ module.exports = {
   getAllP2hById,
   getAllData,
   getP2hByVehicle,
-  getP2hById,
+  getP2hByIdWithLocation,
   getAllP2hGroupedByMonth,
   getAllP2hForThisAndLastWeek,
   getLastCreatedByUser,

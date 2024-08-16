@@ -14,6 +14,12 @@ module.exports = (sequelize, DataTypes) => {
           allowNull: false,
         },
       })
+      Location.belongsTo(models.User, {
+        foreignKey: {
+          name: 'userId',
+          allowNull: false,
+        },
+      })
     }
   }
   Location.init(

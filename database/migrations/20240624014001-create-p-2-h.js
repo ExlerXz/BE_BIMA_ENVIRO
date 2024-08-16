@@ -21,10 +21,6 @@ module.exports = {
       idMachineRoom: {
         type: Sequelize.INTEGER,
       },
-      idLocation: {
-        type: Sequelize.INTEGER,
-        allowNull: true,
-      },
       ntsAroundU: {
         type: Sequelize.STRING,
         allowNull: true,

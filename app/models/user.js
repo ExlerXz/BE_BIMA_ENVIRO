@@ -28,6 +28,13 @@ module.exports = (sequelize, DataTypes) => {
           allowNull: false,
         },
       })
+
+      User.hasMany(models.Location, {
+        foreignKey: {
+          name: 'userId',
+          allowNull: false,
+        },
+      })
     }
   }
   User.init(
