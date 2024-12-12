@@ -1,9 +1,5 @@
 const Sequelize = require('sequelize')
 
-const {
-  DATABASE_URL = 'postgres://user:password@localhost:5432/dbname', // Connection string
-} = process.env
-
 // Inisialisasi Sequelize dengan connection string
 const sequelize = new Sequelize(DATABASE_URL, {
   dialect: 'postgres',
