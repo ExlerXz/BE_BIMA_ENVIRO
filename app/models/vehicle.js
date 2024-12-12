@@ -19,6 +19,8 @@ module.exports = (sequelize, DataTypes) => {
   Vehicle.init(
     {
       type: DataTypes.STRING,
+      modelu: DataTypes.STRING,
+      nou: DataTypes.STRING,
     },
     {
       sequelize,

@@ -22,4 +22,14 @@ const getAllVehicle = async (req, res, next) => {
   }
 }
 
-module.exports = { createVehicle, getAllVehicle }
+const getVehicleByType = async (req, res, next) => {
+  const { type } = req.query
+  try {
+    const vehicles = await Vehicle.findAll({ where: { type } })
+    return res.status(200).json({ status: 'success', vehicles })
+  } catch (err) {
+    next(new ApiError(err.message, 500))
+  }
+}
+
+module.exports = { createVehicle, getAllVehicle, getVehicleByType }

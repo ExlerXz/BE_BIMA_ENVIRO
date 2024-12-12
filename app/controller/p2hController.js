@@ -136,8 +136,6 @@ const createP2hDt = async (req, res, next) => {
       idInTheCabin: inTheCabin.id,
       idMachineRoom: machineRoom.id,
       idVehicle,
-      modelu,
-      nou,
       date: formattedDate,
       shift,
       time,
@@ -193,8 +191,6 @@ const createP2hBul = async (req, res, next) => {
     krk,
     ar,
     oe,
-    modelu,
-    nou,
     shift,
     time,
     earlyhm,
@@ -279,8 +275,6 @@ const createP2hBul = async (req, res, next) => {
       idInTheCabin: inTheCabin.id,
       idMachineRoom: machineRoom.id,
       idVehicle,
-      modelu,
-      nou,
       date: formattedDate,
       shift,
       time,
@@ -348,8 +342,6 @@ const createP2hLv = async (req, res, next) => {
     oe,
     os,
     fba,
-    modelu,
-    nou,
     shift,
     time,
     earlykm,
@@ -440,8 +432,6 @@ const createP2hLv = async (req, res, next) => {
       idInTheCabin: inTheCabin.id,
       idMachineRoom: machineRoom.id,
       idVehicle,
-      modelu,
-      nou,
       date: formattedDate,
       shift,
       time,
@@ -503,8 +493,6 @@ const createP2hBus = async (req, res, next) => {
     ar,
     oe,
     fba,
-    modelu,
-    nou,
     shift,
     time,
     earlykm,
@@ -594,8 +582,6 @@ const createP2hBus = async (req, res, next) => {
       idInTheCabin: inTheCabin.id,
       idMachineRoom: machineRoom.id,
       idVehicle,
-      modelu,
-      nou,
       date: formattedDate,
       shift,
       time,
@@ -656,8 +642,6 @@ const createP2hEx = async (req, res, next) => {
     krk,
     ar,
     oe,
-    modelu,
-    nou,
     shift,
     time,
     earlyhm,
@@ -744,8 +728,6 @@ const createP2hEx = async (req, res, next) => {
       idInTheCabin: inTheCabin.id,
       idMachineRoom: machineRoom.id,
       idVehicle,
-      modelu,
-      nou,
       date: formattedDate,
       shift,
       time,
@@ -1101,6 +1083,30 @@ const getAllP2hById = async (req, res, next) => {
   }
 }
 
+const getP2hById = async (req, res, next) => {
+  const { id } = req.params
+  const userId = req.user.id
+  try {
+    const p2h = await P2h.findOne({
+      where: { id },
+      include: [
+        { model: Vehicle },
+        { model: AroundUnit },
+        { model: MachineRoom },
+        { model: InTheCabin },
+      ],
+    })
+
+    // Combine the P2h and Location data
+    res.status(200).json({
+      status: 'success',
+      p2h,
+    })
+  } catch (err) {
+    next(new ApiError(err.message, 500))
+  }
+}
+
 const getP2hByIdWithLocation = async (req, res, next) => {
   const { id } = req.params
   const userId = req.user.id
@@ -1229,6 +1235,7 @@ module.exports = {
   validateAdmin,
   validationForeman,
   addNotesF,
+  getP2hById,
   getAllLocation,
   getLocationById,
   getAllP2h,

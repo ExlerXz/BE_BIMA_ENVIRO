@@ -2,18 +2,24 @@ const { Auth, User, PasswordReset, VerificationToken } = require('../models')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const nodemailer = require('nodemailer')
+const { Sequelize, Op } = require('sequelize')
 
 const ApiError = require('../../utils/apiError')
 
 const login = async (req, res, next) => {
   try {
-    const { username, password } = req.body
+    const { usernameOrEmail, password } = req.body
 
-    if (!username || !password) {
-      throw new ApiError('Username and password are required', 400)
+    if (!usernameOrEmail || !password) {
+      throw new ApiError('Username/Email and password are required', 400)
     }
 
-    const user = await Auth.findOne({ where: { username }, include: User })
+    const user = await Auth.findOne({
+      where: {
+        [Op.or]: [{ username: usernameOrEmail }, { email: usernameOrEmail }],
+      },
+      include: User,
+    })
 
     if (!user) {
       throw new ApiError('User not found', 404)
@@ -63,7 +69,7 @@ const loginAdmin = async (req, res, next) => {
       throw new ApiError('User not found', 404)
     }
 
-    if (user.User.role !== 'SuperAdmin') {
+    if (user.User.role !== 'Admin') {
       throw new ApiError('You are not an admin', 401)
     }
 
@@ -95,17 +101,42 @@ const loginAdmin = async (req, res, next) => {
 
 const registeringMember = async (req, res, next) => {
   try {
-    const { username, password, role, phoneNumber, email } = req.body
+    const { username, password, role, nik, phoneNumber, email } = req.body
 
     if (!username || !password || !role || !phoneNumber || !email) {
       throw new ApiError('All fields are required', 400)
     }
 
+    // Check if email already exists in the Auth table
+    const existingAuth = await Auth.findOne({ where: { email } })
+
+    if (existingAuth) {
+      // Find the associated user with the same email
+      const existingUser = await User.findByPk(existingAuth.userId)
+
+      // Check if the user is not verified
+      if (existingUser && !existingUser.isVerified) {
+        // Delete the old unverified user and related data
+        await Auth.destroy({ where: { userId: existingUser.id } })
+        await VerificationToken.destroy({ where: { userId: existingUser.id } })
+        await User.destroy({ where: { id: existingUser.id } })
+        console.log(`Old unverified user with email ${email} deleted`)
+      } else {
+        // If the user is verified, block re-registration
+        return res.status(400).json({
+          status: 'fail',
+          message: 'Email is already verified. Please log in.',
+        })
+      }
+    }
+
+    // Proceed with new registration
     const saltRounds = 10
     const hashedPassword = bcrypt.hashSync(password, saltRounds)
 
     const user = await User.create({
       name: username,
+      nik,
       phoneNumber,
       role,
       email,
@@ -125,7 +156,7 @@ const registeringMember = async (req, res, next) => {
     await VerificationToken.create({
       userId: user.id,
       token,
-      expiresAt: new Date(Date.now() + 120000),
+      expiresAt: new Date(Date.now() + 120000), // 2 minutes expiration
     })
 
     const transporter = nodemailer.createTransport({
@@ -215,6 +246,7 @@ const registeringMember = async (req, res, next) => {
           .status(500)
           .json({ message: 'Failed to send verification email' })
       }
+
       res.status(201).json({
         status: 'success',
         message: 'Register success. Verification email sent.',
@@ -224,6 +256,7 @@ const registeringMember = async (req, res, next) => {
         },
       })
 
+      // Token expiration and cleanup
       setTimeout(async () => {
         try {
           const userToCheck = await User.findByPk(user.id)
@@ -243,7 +276,7 @@ const registeringMember = async (req, res, next) => {
         } catch (err) {
           console.error('Error deleting expired token and user data:', err)
         }
-      }, 120000)
+      }, 120000) // 2 minutes
     })
   } catch (err) {
     next(new ApiError(err.message, 500))
@@ -290,12 +323,17 @@ const verifyUser = async (req, res, next) => {
                   font-size: 24px;
                   color: #ff6347;
                 }
+                .container h4 {
+                  font-size: 16px;
+                  color: #ff6347;
+                }
               </style>
             </head>
             <body>
               <div class="container">
                 <img src="https://cdn-icons-png.flaticon.com/512/6227/6227339.png" alt="Expired Token">
-                <h1>Token Expired or Invalid</h1>
+                <h1>Token Expired</h1>
+                <h4>Please return to the registration page to re-register</h4>
               </div>
             </body>
           </html>

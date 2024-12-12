@@ -1,16 +1,13 @@
 const Sequelize = require('sequelize')
 
 const {
-  DB_USERNAME = '',
-  DB_PASSWORD = '',
-  DB_NAME = '',
-  DB_HOST = '127.0.0.1',
-  DB_PORT = '5432',
+  DATABASE_URL = 'postgres://user:password@localhost:5432/dbname', // Connection string
 } = process.env
 
-const sequelize = new Sequelize(`${DB_NAME}`, DB_USERNAME, DB_PASSWORD, {
-  host: DB_HOST,
+// Inisialisasi Sequelize dengan connection string
+const sequelize = new Sequelize(DATABASE_URL, {
   dialect: 'postgres',
+  protocol: 'postgres',
 })
 
 const databaseValidation = async () => {
@@ -25,27 +22,15 @@ const databaseValidation = async () => {
 module.exports = {
   databaseValidation,
   development: {
-    username: DB_USERNAME,
-    password: DB_PASSWORD,
-    database: `${DB_NAME}`,
-    host: DB_HOST,
-    port: DB_PORT,
+    use_env_variable: 'DATABASE_URL',
     dialect: 'postgres',
   },
   test: {
-    username: DB_USERNAME,
-    password: DB_PASSWORD,
-    database: `${DB_NAME}`,
-    host: DB_HOST,
-    port: DB_PORT,
+    use_env_variable: 'DATABASE_URL',
     dialect: 'postgres',
   },
   production: {
-    username: DB_USERNAME,
-    password: DB_PASSWORD,
-    database: `${DB_NAME}`,
-    host: DB_HOST,
-    port: DB_PORT,
+    use_env_variable: 'DATABASE_URL',
     dialect: 'postgres',
   },
 }

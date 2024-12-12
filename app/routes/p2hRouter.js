@@ -26,5 +26,6 @@ router.get('/month', P2h.getAllP2hGroupedByMonth)
 router.get('/week', P2h.getAllP2hForThisAndLastWeek)
 router.get('/all', P2h.getAllP2h)
 router.get('/:id', authentication, P2h.getP2hByIdWithLocation)
+router.get('/user/:id', authentication, P2h.getP2hById)
 
 module.exports = router

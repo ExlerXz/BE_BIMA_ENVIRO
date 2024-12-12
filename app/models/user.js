@@ -41,13 +41,14 @@ module.exports = (sequelize, DataTypes) => {
     {
       name: DataTypes.STRING,
       phoneNumber: DataTypes.STRING,
+      nik: DataTypes.STRING,
       imageUrl: {
         type: DataTypes.STRING,
         defaultValue:
           'https://tse2.mm.bing.net/th?id=OIP.U2iQ7wNK6ZzTW_traW_-PQHaHa&pid=Api&P=0&h=180',
       },
       role: {
-        type: DataTypes.ENUM(['SuperAdmin', 'Forman', 'Driver']),
+        type: DataTypes.ENUM(['Admin', 'Forman', 'Driver']),
         defaultValue: 'Driver',
       },
       isVerified: {

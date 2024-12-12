@@ -33,14 +33,6 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: true,
       },
-      modelu: {
-        type: Sequelize.STRING,
-        allowNull: true,
-      },
-      nou: {
-        type: Sequelize.STRING,
-        allowNull: true,
-      },
       date: {
         type: Sequelize.STRING,
         allowNull: true,

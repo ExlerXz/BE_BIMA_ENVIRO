@@ -12,6 +12,9 @@ module.exports = {
       name: {
         type: Sequelize.STRING,
       },
+      nik: {
+        type: Sequelize.STRING,
+      },
       phoneNumber: {
         type: Sequelize.STRING,
       },
@@ -20,7 +23,7 @@ module.exports = {
         allowNull: true,
       },
       role: {
-        type: Sequelize.ENUM(['SuperAdmin', 'Admin', 'Forman', 'Driver']),
+        type: Sequelize.ENUM(['Admin', 'Forman', 'Driver']),
       },
       isVerified: {
         type: Sequelize.BOOLEAN,
